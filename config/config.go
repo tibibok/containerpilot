@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/flynn/json5"
+	"gopkg.in/yaml.v2"
 
 	"github.com/joyent/containerpilot/config/decode"
 	"github.com/joyent/containerpilot/config/logger"
@@ -183,22 +183,16 @@ func newConfig(configData []byte) (*Config, error) {
 
 func unmarshalConfig(data []byte) (map[string]interface{}, error) {
 	var config map[string]interface{}
-	if err := json5.Unmarshal(data, &config); err != nil {
-		syntax, ok := err.(*json5.SyntaxError)
-		if !ok {
-			return nil, fmt.Errorf(
-				"could not parse configuration: %s",
-				err)
-		}
-		return nil, newJSONparseError(data, syntax)
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, err
 	}
 	return config, nil
 }
 
-func newJSONparseError(js []byte, syntax *json5.SyntaxError) error {
-	line, col, err := highlightError(js, syntax.Offset)
-	return fmt.Errorf("parse error at line:col [%d:%d]: %s\n%s", line, col, syntax, err)
-}
+// func newJSONparseError(js []byte, syntax *json5.SyntaxError) error {
+// 	line, col, err := highlightError(js, syntax.Offset)
+// 	return fmt.Errorf("parse error at line:col [%d:%d]: %s\n%s", line, col, syntax, err)
+// }
 
 func highlightError(data []byte, pos int64) (int, int, string) {
 	prevLine := ""

@@ -72,6 +72,12 @@ func (c *Consul) CheckRegister(check *api.AgentCheckRegistration) error {
 // ServiceRegister wraps the Consul.Agent's ServiceRegister method,
 // is used to register a new service with the local agent
 func (c *Consul) ServiceRegister(service *api.AgentServiceRegistration) error {
+	if svcs, err := c.Agent().Services(); err == nil {
+		if svc, ok := svcs[service.ID]; ok {
+			service.Address = svc.Address
+			service.Port = svc.Port
+		}
+	}
 	return c.Agent().ServiceRegister(service)
 }
 

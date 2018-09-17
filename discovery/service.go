@@ -19,6 +19,7 @@ type ServiceDefinition struct {
 	IPAddress                      string
 	EnableTagOverride              bool
 	DeregisterCriticalServiceAfter string
+	Registrator                    bool
 	Consul                         Backend
 
 	wasRegistered bool
@@ -26,9 +27,11 @@ type ServiceDefinition struct {
 
 // Deregister removes the service from Consul.
 func (service *ServiceDefinition) Deregister() {
-	log.Debugf("deregistering: %s", service.ID)
-	if err := service.Consul.ServiceDeregister(service.ID); err != nil {
-		log.Infof("deregistering failed: %s", err)
+	if !service.Registrator {
+		log.Debugf("deregistering: %s", service.ID)
+		if err := service.Consul.ServiceDeregister(service.ID); err != nil {
+			log.Infof("deregistering failed: %s", err)
+		}
 	}
 }
 
@@ -59,19 +62,19 @@ func (service *ServiceDefinition) RegisterWithInitialStatus() {
 	status := ""
 
 	switch service.InitialStatus {
-		case "passing":
-			status = api.HealthPassing
-			break
-		case "warning":
-			status = api.HealthWarning
-			break
-		case "critical":
-			status = api.HealthCritical
-			break
+	case "passing":
+		status = api.HealthPassing
+		break
+	case "warning":
+		status = api.HealthWarning
+		break
+	case "critical":
+		status = api.HealthCritical
+		break
 	}
 
 	log.Infof("Registering service %v with initial status set to %v",
-	          service.Name, service.InitialStatus)
+		service.Name, service.InitialStatus)
 	service.register(status)
 }
 

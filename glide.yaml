@@ -22,3 +22,4 @@ testImport:
   subpackages:
   - assert
 - package: github.com/client9/reopen
+- package: gopkg.in/yaml.v2

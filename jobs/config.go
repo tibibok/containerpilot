@@ -15,7 +15,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const taskMinDuration = time.Millisecond
+const (
+	taskMinDuration   = time.Millisecond
+	deregAfterDefault = "1h"
+)
 
 // Config holds the configuration for service discovery data
 type Config struct {
@@ -80,6 +83,7 @@ type HealthConfig struct {
 type ConsulExtras struct {
 	EnableTagOverride              bool   `mapstructure:"enableTagOverride"`
 	DeregisterCriticalServiceAfter string `mapstructure:"deregisterCriticalServiceAfter"`
+	Registrator                    bool   `mapstructure:"registrator"`
 }
 
 // LoggingConfig handles job-specific logging fields
@@ -143,7 +147,12 @@ func (cfg *Config) validateDiscovery(disc discovery.Backend) error {
 	}
 	// if port isn't set then we won't do any discovery for this job
 	if (cfg.Port == 0 || disc == nil) && cfg.Name != "" {
-		return nil
+		if cfg.ConsulExtras == nil {
+			return nil
+		}
+		if cfg.ConsulExtras != nil && !cfg.ConsulExtras.Registrator {
+			return nil
+		}
 	}
 
 	// we only need to validate initialStatus if we're doing discovery.
@@ -412,10 +421,15 @@ func (cfg *Config) addDiscoveryConfig(disc discovery.Backend) error {
 	var (
 		enableTagOverride bool
 		deregAfter        string
+		registrator       bool
 	)
 
 	if cfg.ConsulExtras != nil {
-		deregAfter = cfg.ConsulExtras.DeregisterCriticalServiceAfter
+		if cfg.ConsulExtras.DeregisterCriticalServiceAfter != "" {
+			deregAfter = cfg.ConsulExtras.DeregisterCriticalServiceAfter
+		} else {
+			deregAfter = deregAfterDefault
+		}
 		_, err := time.ParseDuration(deregAfter)
 		if err != nil {
 			return fmt.Errorf(
@@ -423,6 +437,7 @@ func (cfg *Config) addDiscoveryConfig(disc discovery.Backend) error {
 				cfg.Name, err)
 		}
 		enableTagOverride = cfg.ConsulExtras.EnableTagOverride
+		registrator = cfg.ConsulExtras.Registrator
 	}
 	cfg.serviceDefinition = &discovery.ServiceDefinition{
 		ID:                             id,
@@ -434,6 +449,7 @@ func (cfg *Config) addDiscoveryConfig(disc discovery.Backend) error {
 		IPAddress:                      ipAddress,
 		DeregisterCriticalServiceAfter: deregAfter,
 		EnableTagOverride:              enableTagOverride,
+		Registrator:                    registrator,
 		Consul:                         disc,
 	}
 	return nil

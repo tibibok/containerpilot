@@ -6,7 +6,7 @@ SHELL := /bin/bash
 .PHONY: clean test integration consul ship dockerfile docker cover lint local vendor dep-* tools kirby
 
 IMPORT_PATH := github.com/joyent/containerpilot
-VERSION ?= dev-build-not-for-release
+VERSION ?= $(shell git describe --tags --exact-match || git symbolic-ref -q --short HEAD)
 LDFLAGS := -X ${IMPORT_PATH}/version.GitHash=$(shell git rev-parse --short HEAD) -X ${IMPORT_PATH}/version.Version=${VERSION}
 
 ROOT := $(shell pwd)

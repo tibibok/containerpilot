@@ -1,0 +1,17 @@
+stages:
+  - build
+
+
+build:
+  stage: build
+  tags:
+    - exmtCI
+  only:
+    - tags
+  artifacts:
+    name: containerpilot-${CI_COMMIT_TAG}
+    paths:
+      - build/containerpilot
+  script:
+    - make build
+

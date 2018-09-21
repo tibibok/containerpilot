@@ -19,8 +19,11 @@ type ServiceDefinition struct {
 	IPAddress                      string
 	EnableTagOverride              bool
 	DeregisterCriticalServiceAfter string
-	Registrator                    bool
 	Consul                         Backend
+	// Integration with gliderlabs/registrator
+	Registrator bool
+	// Meta key/value for service (Consul 1.1 and greater)
+	Meta map[string]string
 
 	wasRegistered bool
 }
@@ -102,6 +105,7 @@ func (service *ServiceDefinition) registerService(status string) error {
 			Port:              service.Port,
 			Address:           service.IPAddress,
 			EnableTagOverride: service.EnableTagOverride,
+			Meta:              service.Meta,
 			Check: &api.AgentServiceCheck{
 				TTL:    fmt.Sprintf("%ds", service.TTL),
 				Status: status,

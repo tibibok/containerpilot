@@ -76,6 +76,7 @@ func (c *Consul) ServiceRegister(service *api.AgentServiceRegistration) error {
 		if svc, ok := svcs[service.ID]; ok {
 			service.Address = svc.Address
 			service.Port = svc.Port
+			service.Name = svc.Service
 		}
 	}
 	return c.Agent().ServiceRegister(service)

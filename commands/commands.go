@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/buildkite/interpolate"
 	"github.com/joyent/containerpilot/events"
 	log "github.com/sirupsen/logrus"
 )
@@ -80,6 +81,10 @@ func (c *Command) EnvName() string {
 	return strings.ToUpper(name)
 }
 
+func printSlice(s []string) {
+	log.Debugf("len=%d cap=%d %v", len(s), cap(s), s)
+}
+
 // Run creates an exec.Cmd for the Command and runs it asynchronously.
 // If the parent context is closed/canceled this will terminate the
 // child process and do any cleanup we need.
@@ -93,6 +98,32 @@ func (c *Command) Run(pctx context.Context, bus *events.EventBus) {
 	c.lock.Lock()
 	log.Debugf("%s.Run start", c.Name)
 
+	// Interpolate command with environment
+	log.Debugf("RAW_CMD:=> '%s' '%s'", c.Exec, strings.Join(c.Args, " "))
+	env := interpolate.NewSliceEnv(os.Environ())
+	if interpolatedExec, err := interpolate.Interpolate(env, c.Exec); err == nil {
+		log.Debugf("Interpoloate '%s' with '%s'", c.Exec, interpolatedExec)
+		c.Exec = interpolatedExec
+	}
+	if len(c.Args) > 0 {
+		// interpolatedArgs := make([]string, len(c.Args))
+		var interpolatedArgs []string
+		for _, arg := range c.Args {
+			interpolatedArg, err := interpolate.Interpolate(env, arg)
+			if err != nil {
+				log.Debugf("ERROR:=> %s", err.Error())
+				continue
+			}
+			log.Debugf("Interpolate '%s' with '%s'", arg, interpolatedArg)
+			interpolatedArgs = append(interpolatedArgs, interpolatedArg)
+		}
+		printSlice(c.Args)
+		printSlice(interpolatedArgs)
+		c.Args = interpolatedArgs
+	}
+	log.Debugf("CMD:=> '%s' '%s'", c.Exec, strings.Join(c.Args, " "))
+	// end
+
 	cmd := exec.Command(c.Exec, c.Args...)
 	if c.logger.Logger != nil {
 		cmd.Stdout = c.logger.Writer()
@@ -104,7 +135,6 @@ func (c *Command) Run(pctx context.Context, bus *events.EventBus) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	c.Cmd = cmd
 	ctx, cancel := getContext(pctx, c.Timeout)
-
 	go func() {
 		// Children may have side-effects so we don't want to wait for them
 		// to be reaped if we timeout, so we can't use CommandContext from

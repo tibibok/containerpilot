@@ -1,5 +1,5 @@
-hash: ffa88dbc8139abebe02794839d7a614f28d353ad35b9a8d901a6ddfa0fad3d8f
-updated: 2018-09-17T10:42:54.729810382+03:00
+hash: d35c8e718290cde0d72382956f5dfc05307fb764dbbe2b3de5b9d713ce2f1769
+updated: 2018-09-19T15:37:19.748511315+03:00
 imports:
 - name: github.com/beorn7/perks
   version: 4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9
@@ -61,6 +61,8 @@ imports:
 - name: gopkg.in/yaml.v2
   version: 5420a8b6744d3b0345ab293f6fcba19c978f1183
 testImports:
+- name: github.com/buildkite/interpolate
+  version: c1c376f870d259871fcc9bf3bcfd4889b999ed1a
 - name: github.com/davecgh/go-spew
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:

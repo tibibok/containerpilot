@@ -28,7 +28,7 @@ _testmain.go
 build/
 release/
 cover/
-vendor/
+# vendor/
 .glide
 *.tar.gz
 *.log

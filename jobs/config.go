@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/joyent/containerpilot/commands"
@@ -417,7 +418,10 @@ func (cfg *Config) addDiscoveryConfig(disc discovery.Backend) error {
 		return err
 	}
 	hostname, _ := os.Hostname()
-	id := fmt.Sprintf("%s-%s", cfg.Name, hostname)
+	idList := []string{hostname, cfg.Name}
+	idList = append(idList, cfg.Tags...)
+	id := strings.Join(idList, "-")
+	// id := fmt.Sprintf("%s-%s-%s", cfg.Name, hostname, strings.Join(cfg.Tags, "-"))
 
 	var (
 		enableTagOverride bool
